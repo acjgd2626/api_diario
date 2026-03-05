@@ -1,0 +1,9 @@
+{
+  "name": "Diario de Embarazo: Abriendo Mis Alas",
+  "description": "Una aplicación de diario digital para que las futuras mamás documenten su viaje de embarazo con notas, fotos, videos y grabaciones de audio. Inspirada en la belleza y la ternura de la maternidad.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "prompt": ""
+}
