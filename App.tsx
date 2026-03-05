@@ -602,20 +602,101 @@ const generateShareableHtml = (journalData: FullJournalData, journalName: string
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>${journalName}</title>
             <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #FDFBF8; color: #5C4B44; margin: 0; padding: 2rem; }
-                .container { max-width: 800px; margin: auto; }
-                h1 { font-family: 'Times New Roman', Times, serif; font-size: 3rem; color: #A17C6B; text-align: center; }
-                .chapter-title { font-family: 'Times New Roman', Times, serif; font-size: 2.5rem; color: #A17C6B; border-bottom: 2px solid #E5A493; padding-bottom: 0.5rem; margin-top: 3rem; }
-                .page-card { background: #fff; border-radius: 12px; padding: 1.5rem; margin-top: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-                h3 { font-family: 'Times New Roman', Times, serif; font-size: 1.5rem; color: #A17C6B; margin-top: 0; }
-                p { line-height: 1.6; }
-                .media-item { max-width: 100%; border-radius: 8px; margin-top: 1rem; }
-                video, audio { width: 100%; margin-top: 1rem; }
-                .diary-date { font-size: 0.9rem; color: #8a6c62; font-weight: bold; }
-                .diary-meta { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; font-size: 0.9rem; color: #555; }
+                @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lato:wght@400;700&display=swap');
+                
+                body { 
+                    font-family: 'Lato', -apple-system, BlinkMacSystemFont, sans-serif; 
+                    background-color: #fff; 
+                    color: #5C4B44; 
+                    margin: 0; 
+                    padding: 0; 
+                }
+                .container { max-width: 900px; margin: auto; padding: 40px; }
+                
+                h1 { font-family: 'Playfair Display', serif; font-size: 3.5rem; color: #A17C6B; text-align: center; margin-bottom: 50px; }
+                .chapter-title { 
+                    font-family: 'Playfair Display', serif; 
+                    font-size: 2.2rem; 
+                    color: #A17C6B; 
+                    border-bottom: 2px solid #E5A493; 
+                    padding-bottom: 10px; 
+                    margin-top: 60px;
+                    page-break-before: always;
+                }
+                .page-card { 
+                    background: #fff; 
+                    padding: 20px 0; 
+                    margin-top: 30px;
+                    border-bottom: 1px solid #eee;
+                }
+                h3 { font-family: 'Playfair Display', serif; font-size: 1.6rem; color: #A17C6B; margin-top: 0; margin-bottom: 15px; }
+                p { line-height: 1.8; font-size: 1.1rem; margin-bottom: 15px; }
+                
+                .entry-block { margin-bottom: 25px; }
+                .entry-block h3 { font-size: 1.2rem; border-left: 3px solid #E5A493; padding-left: 15px; color: #8a6c62; }
+
+                .media-item { 
+                    max-width: 100%; 
+                    max-height: 400px;
+                    border-radius: 12px; 
+                    margin: 15px 0; 
+                    display: block;
+                    object-fit: contain;
+                }
+                
+                .diary-date { font-size: 1rem; color: #E5A493; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+                .diary-meta { 
+                    display: flex; 
+                    flex-wrap: wrap; 
+                    gap: 20px; 
+                    margin-top: 15px; 
+                    font-size: 0.95rem; 
+                    color: #777;
+                    background: #fdfbf8;
+                    padding: 10px;
+                    border-radius: 8px;
+                }
+
+                @media print {
+                    body { padding: 0; background: white; }
+                    .container { width: 100%; max-width: none; padding: 0; }
+                    .page-card { page-break-inside: avoid; border-bottom: none; }
+                    .no-print { display: none; }
+                    button { display: none; }
+                }
+                
+                .print-button {
+                    position: fixed;
+                    bottom: 30px;
+                    right: 30px;
+                    background: #E5A493;
+                    color: white;
+                    border: none;
+                    padding: 15px 30px;
+                    border-radius: 50px;
+                    font-weight: bold;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                    cursor: pointer;
+                    z-index: 1000;
+                    font-size: 1rem;
+                }
             </style>
         </head>
-        <body><div class="container"><h1>${journalName}</h1>${content}</div></body>
+        <body>
+            <button class="print-button no-print" onclick="window.print()">Imprimir o Guardar como PDF</button>
+            <div class="container">
+                <h1>${journalName}</h1>
+                ${content}
+            </div>
+            <script>
+                // Pequeño retraso para asegurar que las imágenes se carguen antes de imprimir
+                window.onload = () => {
+                    setTimeout(() => {
+                        window.print();
+                    }, 1000);
+                };
+            </script>
+        </body>
         </html>
     `;
 };
@@ -650,19 +731,20 @@ const ShareModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void 
         setIsGenerating(true);
         try {
             const htmlContent = generateShareableHtml(journalData, activeJournal.name, selected);
-            const blob = new Blob([htmlContent], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${activeJournal.name.toLowerCase().replace(/ /g, '-')}.html`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+
+            // Abrimos una nueva ventana/tab
+            const printWindow = window.open('', '_blank');
+            if (printWindow) {
+                printWindow.document.open();
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
+            } else {
+                alert("Por favor, permite las ventanas emergentes (pop-ups) para ver tu diario.");
+            }
             onClose();
         } catch (e) {
-            console.error("Error generating file:", e);
-            alert("Hubo un error al generar el archivo.");
+            console.error("Error generating preview:", e);
+            alert("Hubo un error al generar la vista previa.");
         } finally {
             setIsGenerating(false);
         }
@@ -673,11 +755,11 @@ const ShareModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
             <div className="bg-[#FBF6F0] rounded-2xl shadow-2xl p-8 max-w-md w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <h2 className="font-serif text-3xl text-[#A17C6B] mb-4">Compartir Diario</h2>
-                <p className="text-gray-600 mb-6">Selecciona las secciones que quieres incluir en el archivo HTML descargable.</p>
+                <h2 className="font-serif text-3xl text-[#A17C6B] mb-4">Exportar a PDF / Imprimir</h2>
+                <p className="text-gray-600 mb-6">Selecciona las secciones que quieres incluir. Se abrirá una vista previa optimizada para guardar como PDF o imprimir.</p>
                 <div className="flex gap-4 mb-4">
-                    <button onClick={handleSelectAll} className="text-sm text-blue-600">Seleccionar todo</button>
-                    <button onClick={handleDeselectAll} className="text-sm text-blue-600">Deseleccionar todo</button>
+                    <button onClick={handleSelectAll} className="text-sm text-blue-600 font-semibold">Seleccionar todo</button>
+                    <button onClick={handleDeselectAll} className="text-sm text-blue-600 font-semibold">Deseleccionar todo</button>
                 </div>
                 <div className="space-y-3">
                     {PAGES_STRUCTURE.map(chapter => (
@@ -695,7 +777,7 @@ const ShareModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void 
                 </div>
                 <div className="flex justify-end gap-4 mt-8">
                     <Button onClick={onClose} className="bg-gray-400 hover:bg-gray-500">Cancelar</Button>
-                    <Button onClick={handleGenerate} isLoading={isGenerating}>Generar y Descargar</Button>
+                    <Button onClick={handleGenerate} isLoading={isGenerating}>Vista Previa y PDF</Button>
                 </div>
             </div>
         </div>
