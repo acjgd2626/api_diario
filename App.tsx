@@ -1134,9 +1134,9 @@ const JournalSelectionScreen = ({ onHelpClick }: { onHelpClick: () => void }) =>
             <div className="min-h-screen bg-[#FDFBF8] flex items-center justify-center p-4 relative">
                 <button
                     onClick={onHelpClick}
-                    className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 bg-white/80 rounded-full shadow-sm hover:bg-[#E5A493]/20 transition-colors text-[#A17C6B] font-semibold border border-[#E5A493]/10"
+                    className="fixed top-4 right-4 md:absolute md:top-6 md:right-6 z-30 flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-white/90 rounded-full shadow-md hover:bg-[#E5A493]/20 transition-colors text-[#A17C6B] text-xs md:text-sm font-semibold border border-[#E5A493]/20"
                 >
-                    <QuestionMarkCircleIcon className="w-5 h-5" />
+                    <QuestionMarkCircleIcon className="w-5 h-5 md:w-6 md:h-6" />
                     <span>Ayuda e Instalación</span>
                 </button>
                 <Card className="w-full max-w-lg text-center">
