@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { HashRouter, Routes, Route, NavLink, useParams, Navigate, useNavigate } from 'react-router-dom';
 import { JournalProvider, useJournal, fileToMediaType } from './context/JournalContext';
-import { PAGES_STRUCTURE, ButterflyIcon, SparklesIcon, PencilIcon, ShareIcon, ArrowLeftOnRectangleIcon } from './constants';
+import { PAGES_STRUCTURE, ButterflyIcon, SparklesIcon, PencilIcon, ShareIcon, ArrowLeftOnRectangleIcon, BackupIcon, QuestionMarkCircleIcon } from './constants';
 import { PageDefinition, PageField, MediaFile, MediaType, Mood, FullJournalData, Chapter, Journal } from './types';
 import { generateJournalPrompt, generateAffirmations, suggestBabyNames } from './services/geminiService';
 
@@ -680,9 +680,28 @@ const generateShareableHtml = (journalData: FullJournalData, journalName: string
                     z-index: 1000;
                     font-size: 1rem;
                 }
+
+                .back-button {
+                    position: fixed;
+                    top: 20px;
+                    left: 20px;
+                    background: #5C4B44;
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    z-index: 1000;
+                    font-size: 0.9rem;
+                    display: flex;
+                    items-center: center;
+                    gap: 8px;
+                }
             </style>
         </head>
         <body>
+            <button class="back-button no-print" onclick="window.close()">← Volver al Diario</button>
             <button class="print-button no-print" onclick="window.print()">Imprimir o Guardar como PDF</button>
             <div class="container">
                 <h1>${journalName}</h1>
@@ -702,7 +721,7 @@ const generateShareableHtml = (journalData: FullJournalData, journalName: string
 };
 
 const ShareModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
-    const { journalData, activeJournal } = useJournal();
+    const { journalData, activeJournal, exportBackup } = useJournal();
     const [selected, setSelected] = useState<string[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
 
@@ -785,13 +804,65 @@ const ShareModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void 
 };
 
 
+const HelpModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-[#FBF6F0] rounded-2xl shadow-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="font-serif text-3xl text-[#A17C6B]">Guía de Ayuda 🌸</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <div className="prose prose-brown max-w-none space-y-6 text-[#5C4B44]">
+                    <section>
+                        <h3 className="font-serif text-xl text-[#A17C6B] border-b border-[#E5A493]/30 pb-2">📱 Instalación en el móvil</h3>
+                        <p className="mt-2 text-sm leading-relaxed">Para usar AMYO como una app: abre el link en <strong>Safari</strong> (iPhone) o <strong>Chrome</strong> (Android), pulsa "Compartir" y selecciona <strong>"Añadir a pantalla de inicio"</strong>.</p>
+                    </section>
+
+                    <section>
+                        <h3 className="font-serif text-xl text-[#A17C6B] border-b border-[#E5A493]/30 pb-2">🛡️ Privacidad y Seguridad</h3>
+                        <p className="mt-2 text-sm leading-relaxed">Tus fotos y textos se guardan <strong>solo en tu teléfono</strong>. Nadie más puede verlos. Por eso es vital que no olvides tu contraseña.</p>
+                    </section>
+
+                    <section>
+                        <h3 className="font-serif text-xl text-[#A17C6B] border-b border-[#E5A493]/30 pb-2">📄 Guardar como PDF</h3>
+                        <p className="mt-2 text-sm leading-relaxed">En el botón "Compartir", pulsa "Vista Previa y PDF". Se abrirá una ventana nueva donde podrás usar la función de imprimir de tu móvil para guardar un archivo PDF eterno.</p>
+                    </section>
+
+                    <section className="bg-[#E5A493]/10 p-4 rounded-xl border border-[#E5A493]/20">
+                        <h3 className="font-serif text-lg text-[#A17C6B]">💡 Tip: Copia de Seguridad</h3>
+                        <p className="mt-1 text-xs text-[#8a6c62] leading-relaxed">Usa el botón "Respaldar Todo" de vez en cuando. Descargarás un archivo que podrás usar para recuperar tu diario si cambias de teléfono o borras el navegador.</p>
+                    </section>
+
+                    <section className="pt-4 border-t border-gray-200">
+                        <h3 className="font-serif text-xl text-[#A17C6B]">⚖️ Términos y Responsabilidad</h3>
+                        <p className="mt-2 text-[10px] text-gray-500 leading-tight">
+                            AMYO es una cortesía gratuita. Al usarla, aceptas que: 1) Los datos se guardan solo en tu móvil y somos ajenos a pérdidas por borrado o daño del equipo. 2) No existe recuperación de contraseña. 3) El contenido no sustituye consejo médico profesional.
+                        </p>
+                    </section>
+                </div>
+
+                <div className="mt-8 flex justify-center">
+                    <Button onClick={onClose}>Entendido</Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
 // --- Layout & Main App ---
 
-const Sidebar = ({ isOpen, setIsOpen, onShareClick, onLogout, journalName }: { isOpen: boolean, setIsOpen: (isOpen: boolean) => void, onShareClick: () => void, onLogout: () => void, journalName: string }) => {
+const Sidebar = ({ isOpen, setIsOpen, onShareClick, onHelpClick, onLogout, journalName }: { isOpen: boolean, setIsOpen: (isOpen: boolean) => void, onShareClick: () => void, onHelpClick: () => void, onLogout: () => void, journalName: string }) => {
     const activeLinkStyle = {
         backgroundColor: '#E5A493',
         color: 'white',
     };
+
+    const { exportBackup } = useJournal();
 
     return (
         <>
@@ -836,6 +907,14 @@ const Sidebar = ({ isOpen, setIsOpen, onShareClick, onLogout, journalName }: { i
                         <ShareIcon className="w-5 h-5" />
                         Compartir
                     </button>
+                    <button onClick={onHelpClick} className="w-full flex items-center justify-center gap-2 px-4 py-2 font-bold text-gray-600 bg-white/50 rounded-lg hover:bg-gray-200 transition-colors">
+                        <QuestionMarkCircleIcon className="w-5 h-5" />
+                        Ayuda y Guía
+                    </button>
+                    <button onClick={exportBackup} className="w-full flex items-center justify-center gap-2 px-4 py-2 font-bold text-blue-600 bg-blue-50/50 rounded-lg hover:bg-blue-100 transition-colors">
+                        <BackupIcon className="w-5 h-5" />
+                        Respaldar Todo
+                    </button>
                     <button onClick={onLogout} className="w-full flex items-center justify-center gap-2 px-4 py-2 font-bold text-gray-600 bg-white/50 rounded-lg hover:bg-gray-200 transition-colors">
                         <ArrowLeftOnRectangleIcon className="w-5 h-5" />
                         Cambiar de Diario
@@ -848,7 +927,7 @@ const Sidebar = ({ isOpen, setIsOpen, onShareClick, onLogout, journalName }: { i
 };
 
 
-const MainLayout = () => {
+const MainLayout = ({ onHelpClick }: { onHelpClick: () => void }) => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const { lockJournal, activeJournal } = useJournal();
@@ -861,6 +940,7 @@ const MainLayout = () => {
                 isOpen={sidebarOpen}
                 setIsOpen={setSidebarOpen}
                 onShareClick={() => setIsShareModalOpen(true)}
+                onHelpClick={onHelpClick}
                 onLogout={lockJournal}
                 journalName={activeJournal.name}
             />
@@ -887,9 +967,13 @@ const MainLayout = () => {
 };
 
 const PasswordPromptModal = ({ journal, onUnlock, onCancel, onSetPassword }: { journal: Journal, onUnlock: (password: string) => boolean, onCancel: () => void, onSetPassword: (password: string) => void }) => {
+    const { getHint } = useJournal();
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showHint, setShowHint] = useState(false);
     const [error, setError] = useState('');
+
+    const hint = getHint(journal.id);
 
     const needsToSetPassword = !journal.isEncrypted;
 
@@ -946,6 +1030,17 @@ const PasswordPromptModal = ({ journal, onUnlock, onCancel, onSetPassword }: { j
                         </div>
                     )}
                     {error && <p className="text-red-500 text-sm">{error}</p>}
+                    {!needsToSetPassword && hint && (
+                        <div className="pt-2">
+                            {showHint ? (
+                                <p className="text-sm text-[#A17C6B] bg-[#FBF6F0] p-3 rounded-lg border border-[#E5A493]/30">
+                                    <strong>Pista:</strong> {hint}
+                                </p>
+                            ) : (
+                                <button type="button" onClick={() => setShowHint(true)} className="text-xs text-blue-600 underline">¿Necesitas una pista?</button>
+                            )}
+                        </div>
+                    )}
                     <div className="flex justify-end gap-4 pt-2">
                         <Button type="button" onClick={onCancel} className="bg-gray-400 hover:bg-gray-500">Cancelar</Button>
                         <Button type="submit">{needsToSetPassword ? 'Guardar y Abrir' : 'Abrir'}</Button>
@@ -957,14 +1052,38 @@ const PasswordPromptModal = ({ journal, onUnlock, onCancel, onSetPassword }: { j
 };
 
 
-const JournalSelectionScreen = () => {
-    const { allJournals, unlockJournal, createJournal, setJournalPassword } = useJournal();
+const JournalSelectionScreen = ({ onHelpClick }: { onHelpClick: () => void }) => {
+    const { allJournals, unlockJournal, createJournal, setJournalPassword, importBackup } = useJournal();
     const [newJournalName, setNewJournalName] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [passwordHint, setPasswordHint] = useState('');
     const [error, setError] = useState('');
     const [isLowEntropyWarning, setIsLowEntropyWarning] = useState(false);
     const [unlockingJournal, setUnlockingJournal] = useState<Journal | null>(null);
+
+    const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            const content = event.target?.result as string;
+            if (content) {
+                if (window.confirm("¿Seguro que quieres restaurar esta copia? Esto reemplazará los diarios actuales en este dispositivo.")) {
+                    const success = await importBackup(content);
+                    if (success) {
+                        alert("¡Copia de seguridad restaurada con éxito!");
+                    } else {
+                        alert("Error al importar el archivo. Asegúrate de que es un archivo de copia válido.");
+                    }
+                }
+            }
+            // Reset input
+            e.target.value = '';
+        };
+        reader.readAsText(file);
+    };
 
     const handleCreate = (e: React.FormEvent) => {
         e.preventDefault();
@@ -988,10 +1107,11 @@ const JournalSelectionScreen = () => {
         }
 
         console.log("Creando diario:", newJournalName);
-        createJournal(newJournalName, newPassword);
+        createJournal(newJournalName, newPassword, passwordHint);
         setNewJournalName('');
         setNewPassword('');
         setConfirmPassword('');
+        setPasswordHint('');
         setIsLowEntropyWarning(false);
     };
 
@@ -1011,7 +1131,14 @@ const JournalSelectionScreen = () => {
                     onSetPassword={(password) => setJournalPassword(unlockingJournal.id, password)}
                 />
             )}
-            <div className="min-h-screen bg-[#FDFBF8] flex items-center justify-center p-4">
+            <div className="min-h-screen bg-[#FDFBF8] flex items-center justify-center p-4 relative">
+                <button
+                    onClick={onHelpClick}
+                    className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 bg-white/80 rounded-full shadow-sm hover:bg-[#E5A493]/20 transition-colors text-[#A17C6B] font-semibold border border-[#E5A493]/10"
+                >
+                    <QuestionMarkCircleIcon className="w-5 h-5" />
+                    <span>Ayuda e Instalación</span>
+                </button>
                 <Card className="w-full max-w-lg text-center">
                     <span className="block font-serif text-5xl tracking-[0.2em] text-[#A17C6B] uppercase mb-6">amyo</span>
                     <h1 className="font-serif text-4xl text-[#A17C6B] mb-2">Diario de Embarazo: Abriendo Mis Alas</h1>
@@ -1055,10 +1182,29 @@ const JournalSelectionScreen = () => {
                                 placeholder="Confirmar Contraseña"
                                 required
                             />
+                            <Input
+                                type="text"
+                                value={passwordHint}
+                                onChange={handleInputChange(setPasswordHint)}
+                                placeholder="Pista de contraseña (Opcional)"
+                            />
                             {error && <p className="text-red-500 text-sm font-semibold">{error}</p>}
                             <Button type="submit" className="w-full">Crear Diario Seguro</Button>
                         </form>
+                    </div>
 
+                    <div className="mt-8 border-t border-gray-200 pt-6">
+                        <p className="text-sm text-gray-500 mb-4">¿Ya tienes una copia de seguridad de otro dispositivo?</p>
+                        <label className="inline-flex items-center justify-center gap-2 px-6 py-3 font-bold text-blue-600 bg-white border-2 border-blue-100 rounded-xl hover:bg-blue-50 transition-colors cursor-pointer w-full">
+                            <BackupIcon className="w-5 h-5" />
+                            Restaurar copia de seguridad
+                            <input
+                                type="file"
+                                accept=".json"
+                                className="hidden"
+                                onChange={handleImport}
+                            />
+                        </label>
                     </div>
                 </Card>
             </div>
@@ -1068,16 +1214,22 @@ const JournalSelectionScreen = () => {
 
 const AppGate = () => {
     const { activeJournal, isInitialized } = useJournal();
+    const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
     if (!isInitialized) {
         return <Spinner fullScreen />;
     }
 
-    if (activeJournal) {
-        return <MainLayout />;
-    }
-
-    return <JournalSelectionScreen />;
+    return (
+        <>
+            {activeJournal ? (
+                <MainLayout onHelpClick={() => setIsHelpModalOpen(true)} />
+            ) : (
+                <JournalSelectionScreen onHelpClick={() => setIsHelpModalOpen(true)} />
+            )}
+            <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
+        </>
+    );
 };
 
 function App() {

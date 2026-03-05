@@ -1,3 +1,4 @@
+import React from 'react';
 
 export type MediaType = 'image' | 'audio' | 'video';
 
@@ -35,14 +36,15 @@ export interface FullJournalData {
 }
 
 export interface Journal {
-    id: string;
-    name: string;
-    isEncrypted: boolean;
-    data: string | FullJournalData; // string for encrypted, object for decrypted or legacy
+  id: string;
+  name: string;
+  isEncrypted: boolean;
+  passwordHint?: string;
+  data: string | FullJournalData; // string for encrypted, object for decrypted or legacy
 }
 
 export type AllJournals = {
-    [id: string]: Journal;
+  [id: string]: Journal;
 };
 
 export interface PageField {

@@ -10,8 +10,9 @@ interface JournalContextType {
   activeJournal: Journal | null;
   allJournals: AllJournals;
 
-  createJournal: (name: string, password: string) => void;
+  createJournal: (name: string, password: string, hint?: string) => void;
   unlockJournal: (journalId: string, password: string) => boolean;
+  getHint: (journalId: string) => string | undefined;
   lockJournal: () => void;
   setJournalPassword: (journalId: string, password: string) => void;
 
@@ -21,6 +22,8 @@ interface JournalContextType {
   addPersonalDiaryEntry: (entry: Omit<PersonalDiaryEntry, 'id'>) => void;
   updatePersonalDiaryEntry: (entry: PersonalDiaryEntry) => void;
   removePersonalDiaryEntry: (id: string) => void;
+  exportBackup: () => void;
+  importBackup: (jsonData: string) => Promise<boolean>;
 
 
   isInitialized: boolean;
@@ -168,7 +171,7 @@ export const JournalProvider = ({ children }: { children: ReactNode }) => {
     }));
   };
 
-  const createJournal = (name: string, password: string) => {
+  const createJournal = (name: string, password: string, hint?: string) => {
     const newId = `journal-${Date.now()}`;
     if (!name.trim() || !password.trim()) {
       alert("El nombre y la contraseña no pueden estar vacíos.");
@@ -181,6 +184,7 @@ export const JournalProvider = ({ children }: { children: ReactNode }) => {
       id: newId,
       name: name.trim(),
       isEncrypted: true,
+      passwordHint: hint?.trim(),
       data: encryptedData
     };
     setAllJournals(prev => ({ ...prev, [newId]: newJournal }));
@@ -202,6 +206,10 @@ export const JournalProvider = ({ children }: { children: ReactNode }) => {
     }
     return false;
   };
+
+  const getHint = (journalId: string): string | undefined => {
+    return allJournals[journalId]?.passwordHint;
+  }
 
   const setJournalPassword = (journalId: string, password: string) => {
     const journal = allJournals[journalId];
@@ -309,6 +317,31 @@ export const JournalProvider = ({ children }: { children: ReactNode }) => {
     }));
   };
 
+  const exportBackup = () => {
+    const dataStr = JSON.stringify(allJournals);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    const exportFileDefaultName = `amyo-diario-backup-${new Date().toISOString().split('T')[0]}.json`;
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
+  const importBackup = async (jsonData: string): Promise<boolean> => {
+    try {
+      const parsedData = JSON.parse(jsonData);
+      // Validación básica
+      if (typeof parsedData !== 'object' || Array.isArray(parsedData) || parsedData === null) return false;
+
+      setAllJournals(parsedData);
+      await saveToIDB('allJournals', parsedData);
+      return true;
+    } catch (e) {
+      console.error("Error importing backup:", e);
+      return false;
+    }
+  };
+
 
 
   return (
@@ -318,6 +351,7 @@ export const JournalProvider = ({ children }: { children: ReactNode }) => {
       allJournals,
       createJournal,
       unlockJournal,
+      getHint,
       lockJournal,
       setJournalPassword,
       updateEntry,
@@ -326,6 +360,8 @@ export const JournalProvider = ({ children }: { children: ReactNode }) => {
       addPersonalDiaryEntry,
       updatePersonalDiaryEntry,
       removePersonalDiaryEntry,
+      exportBackup,
+      importBackup,
 
       isInitialized,
     }}>
